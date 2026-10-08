@@ -1,0 +1,28 @@
+{
+  "app": "paibantai",
+  "version": 1,
+  "name": "排版台使用示例",
+  "savedAt": "2026-10-08T02:30:00.000Z",
+  "css": "",
+  "blocks": {
+    "k1":  { "id": "k1",  "type": "h1",     "content": "排版台使用示例" },
+    "k2":  { "id": "k2",  "type": "p",      "content": "把文章拆成模块之后，调整顺序只是拖动一行。\n段落里的换行也会逐行缩进，不用手打空格。", "indent": true },
+    "k3":  { "id": "k3",  "type": "h2",     "content": "一、常见的模块" },
+    "k4":  { "id": "k4",  "type": "ul",     "content": "标题：H1 / H2 / H3\n正文与重点：可开首行缩进\n引用、列表、代码块\n图片：可设居左 / 居中 / 靠右" },
+    "k5":  { "id": "k5",  "type": "img",    "content": "assets/screenshot-editor.png\n图注：图片模块可以设位置，图注会跟着一起对齐", "align": "center" },
+    "k6":  { "id": "k6",  "type": "quote",  "content": "样式集中在一份 CSS 里，改一处，预览和导出一起变。" },
+    "k7":  { "id": "k7",  "type": "h2",     "content": "二、样式与导出", "align": "center" },
+    "k8":  { "id": "k8",  "type": "code",   "content": "git clone https://github.com/YOURNAME/wechat-paibantai.git\n# 单文件、零依赖：双击 index.html 就能用" },
+    "k9":  { "id": "k9",  "type": "strong", "content": "重点段落：整段加粗，同样支持首行缩进。", "indent": true },
+    "k10": { "id": "k10", "type": "hr",     "content": "" },
+    "k11": { "id": "k11", "type": "h3",     "content": "组合里的小标题" },
+    "k12": { "id": "k12", "type": "p",      "content": "组合会把内部模块放进一个虚线框，导出时保留外框。" },
+    "k13": { "id": "k13", "type": "group",  "content": "组合示例", "children": ["k11", "k12"] },
+    "k14": { "id": "k14", "type": "p",      "content": "结尾：点右上角「复制到公众号」，即可带样式粘贴。" }
+  },
+  "pool": [
+    { "id": "p1", "type": "p", "content": "备用段落：篇幅不够时把这段拖进正文。" }
+  ],
+  "article": ["k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k13", "k10", "k14"],
+  "open": { "k5": true, "k7": true, "k13": false }
+}

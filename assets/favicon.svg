@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="排版台">
+  <!-- 墨底 -->
+  <rect width="64" height="64" rx="12" fill="#17191C"/>
+  <!-- 规矩线 -->
+  <line x1="12" y1="12" x2="12" y2="52" stroke="#5A6169" stroke-width="2" stroke-linecap="round"/>
+  <!-- 左对齐三行 -->
+  <line x1="20" y1="20" x2="52" y2="20" stroke="#E9EBEE" stroke-width="4" stroke-linecap="round"/>
+  <line x1="20" y1="31" x2="44" y2="31" stroke="#E9EBEE" stroke-width="4" stroke-linecap="round"/>
+  <!-- 朱砂：正在排的那一行 -->
+  <line x1="20" y1="42" x2="36" y2="42" stroke="#D94032" stroke-width="4" stroke-linecap="round"/>
+</svg>

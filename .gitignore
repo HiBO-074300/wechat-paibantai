@@ -1,0 +1,20 @@
+# 排版台导出的工程存档（examples 下的示例要保留）
+*.ptai.json
+!examples/*.ptai.json
+
+# 备份与临时文件
+*.bak
+*.bak[0-9]*
+*~
+*.tmp
+*.temp
+
+# 系统垃圾
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器 / IDE
+.vscode/
+.idea/
+*.code-workspace
