@@ -272,6 +272,9 @@ body.is-dragging .blk:hover,
 }
 .imgup button:hover{ border-color:var(--indigo); color:var(--indigo); background:#F2F5F9; }
 .imgup .upl{ font-size:11px; color:var(--rule); font-family:var(--font-util); }
+/* 把图片拖到模块上时的高亮 */
+.blk.t-img.dragover{ outline:2px dashed var(--indigo); outline-offset:-2px; background:#EAF1F8; }
+.blk.t-img.dragover .body .imgup{ display:block; }
 
 /* 组合收纳区 */
 .sub{
@@ -493,12 +496,14 @@ body.is-dragging .blk:hover,
     <button class="tbtn" id="btnRedo" title="重做 Ctrl+Shift+Z"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><polyline points="15 14 20 9 15 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 20v-7a4 4 0 0 1 4-4h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>重做</button>
     <button class="tbtn" id="btnSaveP" title="保存工程到本机（Ctrl+S）"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 4v10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="7.5 10 12 14.5 16.5 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>保存工程</button>
     <button class="tbtn" id="btnOpenP" title="打开之前保存的工程（Ctrl+O）"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 14.5V4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="7.5 9 12 4.5 16.5 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>打开工程</button>
+    <button class="tbtn" id="btnImportMd" title="导入 Markdown 文件，自动拆分为模块（也可把 .md 直接拖进窗口）"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 3v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="8 9 12 13 16 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>导入MD</button>
     <button class="tbtn" id="btnCss" title="替换导出用的 CSS 样式"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M14.5 4.5l5 5L9 20H4v-5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 20h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>样式</button>
     <button class="tbtn" onclick="resetAll()" title="清空所有模块（模块池 + 文章结构），可 Ctrl+Z 撤销">重置</button>
     <button class="tbtn" id="btnExport" title="HTML / PDF / Word"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 3v11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="8 10 12 14 16 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v3h16v-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>导出</button>
     <button class="tbtn primary" id="btnCopyWx" title="带样式复制，直接粘进公众号编辑器（Ctrl+Shift+C）"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" stroke-width="2"/></svg>复制到公众号</button>
 </header>
 <input type="file" id="fileInput" accept=".json,application/json" style="display:none">
+<input type="file" id="mdInput" accept=".md,.markdown,.txt,text/markdown,text/plain" style="display:none">
 
 <main class="app">
     <section class="col col-pool">
@@ -552,7 +557,7 @@ body.is-dragging .blk:hover,
             <button class="chip" data-to="article">排到文章末尾</button>
         </div>
         <span class="spacer" style="flex:1"></span>
-        <span class="hintline">列表类型：每行一项　·　图片：第一行填地址或点「上传图片」，可设居左 / 居中 / 靠右　·　复合：勾多个模块合并成一条　·　展开模块可设对齐与首行缩进</span>
+        <span class="hintline">列表类型：每行一项　·　图片：第一行填地址 / 点「上传图片」/ 直接把图片拖进模块，可设居左 / 居中 / 靠右　·　复合：勾多个模块合并成一条　·　展开模块可设对齐与首行缩进</span>
     </div>
     <div class="composer-row">
         <textarea id="cInput" placeholder="输入内容…　（Ctrl+Enter 直接生成）"></textarea>
@@ -802,6 +807,137 @@ function loadProject(o, fallbackName){
 }
 
 /* ============================================================
+   Markdown 导入：把 .md 拆成结构化模块
+   说明：本编辑器的 content 是纯文本（导出时转义），所以
+   行内标记（**粗体** 等）做「去标记」保留纯文本，避免导出变乱码；
+   结构（标题 / 段落 / 列表 / 引用 / 代码 / 分割线 / 图片）完整映射。
+   ============================================================ */
+function stripInline(s){
+    return String(s)
+        .replace(/`([^`]+)`/g, '$1')                          // 行内代码
+        .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')              // 行内图片 → 图注文字
+        .replace(/\*\*([^*]+)\*\*/g, '$1')                     // 加粗
+        .replace(/\*([^*]+)\*/g, '$1')                         // 斜体
+        .replace(/_([^_]+)_/g, '$1')                           // 斜体（下划线）
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');              // 链接 → 文字
+}
+function parseMarkdown(md){
+    const src = String(md || '').replace(/\r\n?/g, '\n');
+    // 跳过开头的 YAML front matter（--- … ---）
+    let body = src;
+    const fm = body.match(/^---\s*\n[\s\S]*?\n---\s*(\n|$)/);   // 跳过开头的 YAML front matter
+    if (fm) body = body.slice(fm[0].length);
+    const lines = body.split('\n');
+    const out = [];
+    let para = [];
+    const flushPara = () => {
+        if (!para.length) return;
+        const text = para.join('\n').trim();
+        para = [];
+        if (!text) return;
+        const whole = text.match(/^\*\*([\s\S]+)\*\*$/);       // 整段都是 **…** → 重点段落
+        if (whole) out.push({ type:'strong', content: stripInline(whole[1].trim()) });
+        else out.push({ type:'p', content: stripInline(text) });
+    };
+    let i = 0;
+    while (i < lines.length){
+        const line = lines[i];
+        // 代码围栏
+        if (/^\s*```/.test(line)){
+            flushPara();
+            i++;
+            const code = [];
+            while (i < lines.length && !/^\s*```/.test(lines[i])){ code.push(lines[i]); i++; }
+            i++;                                                // 跳过结束围栏
+            out.push({ type:'code', content: code.join('\n') });
+            continue;
+        }
+        // 标题（ATX：# ~ ######）
+        const h = line.match(/^\s{0,3}(#{1,6})\s+(.*)$/);
+        if (h){
+            flushPara();
+            const lvl = h[1].length;
+            out.push({ type: lvl <= 1 ? 'h1' : (lvl === 2 ? 'h2' : 'h3'), content: stripInline(h[2].trim()) });
+            i++; continue;
+        }
+        // 分割线 / Setext 下划线（紧跟一行文字时算标题）
+        if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(line) || /^\s*=+\s*$/.test(line)){
+            if (para.length === 1){
+                const txt = stripInline(para[0].trim());
+                para = [];
+                out.push({ type: /^\s*=+\s*$/.test(line) ? 'h1' : 'h2', content: txt });
+                i++; continue;
+            }
+            flushPara();
+            if (/^\s*=+\s*$/.test(line)){ i++; continue; }      // 孤立的 === 不当分割线
+            out.push({ type:'hr', content:'' }); i++; continue;
+        }
+        // 引用块（连续 > 行）
+        if (/^\s*>\s?/.test(line)){
+            flushPara();
+            const q = [];
+            while (i < lines.length && /^\s*>\s?/.test(lines[i])){ q.push(lines[i].replace(/^\s*>\s?/, '')); i++; }
+            out.push({ type:'quote', content: stripInline(q.join('\n').trim()) });
+            continue;
+        }
+        // 独立图片行 ![alt](src)
+        const imgM = line.match(/^\s*!\[([^\]]*)\]\(([^)]+)\)\s*$/);
+        if (imgM){
+            flushPara();
+            const cap = (imgM[1] || '').trim();
+            out.push({ type:'img', content: imgM[2].trim() + (cap ? '\n' + cap : '') });
+            i++; continue;
+        }
+        // 列表（无序 - * + / 有序 1.）
+        const ulM = line.match(/^\s*[-*+]\s+(.*)$/);
+        const olM = line.match(/^\s*\d+\.\s+(.*)$/);
+        if (ulM || olM){
+            flushPara();
+            const type = ulM ? 'ul' : 'ol';
+            const items = [];
+            while (i < lines.length){
+                const ux = lines[i].match(/^\s*[-*+]\s+(.*)$/);
+                const ox = lines[i].match(/^\s*\d+\.\s+(.*)$/);
+                if (type === 'ul' && ux){ items.push(stripInline(ux[1].trim())); i++; }
+                else if (type === 'ol' && ox){ items.push(stripInline(ox[1].trim())); i++; }
+                else break;
+            }
+            out.push({ type, content: items.join('\n') });
+            continue;
+        }
+        // 空行：段结束
+        if (!line.trim()){ flushPara(); i++; continue; }
+        // 普通段落行
+        para.push(line); i++;
+    }
+    flushPara();
+    return out;
+}
+
+/* 把解析结果追加进「文章结构」；首个 H1 若项目名还是默认则用来命名 */
+function importMarkdownText(text){
+    const blocks = parseMarkdown(text);
+    if (!blocks.length){ toast('没解析出任何内容'); return; }
+    pushHistory();
+    blocks.forEach(b => addBlock(b.type, b.content, 'article', state.article.length));
+    const h1 = blocks.find(b => b.type === 'h1');
+    if (h1 && (!state.name || state.name === '未命名推文')){
+        state.name = h1.content;
+        const pn = $('#projName'); if (pn) pn.value = state.name;
+        document.title = safeName(state.name) + ' · 排版台';
+    }
+    sel = [];
+    renderAll(); save();
+    toast('已从 Markdown 导入 ' + blocks.length + ' 个模块（已加入文章结构，可拖动整理）');
+}
+function importMarkdownFile(file){
+    const r = new FileReader();
+    r.onload = () => { try{ importMarkdownText(String(r.result)); }catch(e){ toast('Markdown 解析失败'); } };
+    r.onerror = () => toast('文件读取失败');
+    r.readAsText(file);
+}
+
+/* ============================================================
    3. 渲染
    ============================================================ */
 const $ = s => document.querySelector(s);
@@ -857,6 +993,7 @@ function fmtBarHtml(b){
 
 /* ---------- 多选（不进历史，仅用于合并） ---------- */
 let sel = [];
+let selAnchor = null;                    // Shift 范围选择的锚点：从它到点击项整段选中
 const ICO_PICK = '<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><polyline class="ck" points="7.5 12.5 10.5 15.5 16.5 8.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const ICO_SPLIT = '<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M8 5 4 9l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 5l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="3" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 const ICO_DUP = '<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
@@ -928,7 +1065,7 @@ function renderBlock(b){
             ${peek ? `<span class="peek">${esc(peek)}</span>` : ''}
             <span class="meta">${meta}</span>
             <span class="acts">
-                <button class="pick${picked ? ' on' : ''}" data-act="pick" title="选择（Ctrl+点击行也可多选）" aria-label="选择">${ICO_PICK}</button>
+                <button class="pick${picked ? ' on' : ''}" data-act="pick" title="选择（Ctrl+点击行多选；Shift+点击整段选到此处）" aria-label="选择">${ICO_PICK}</button>
                 <button data-act="type" title="换版式">T</button>
                 ${cont ? `<button data-act="split" title="拆分：把内部模块放回上一层" aria-label="拆分">${ICO_SPLIT}</button>` : ''}
                 <button data-act="dup" title="复制一份" aria-label="复制一份">${ICO_DUP}</button>
@@ -949,7 +1086,7 @@ function renderBlock(b){
                     ? `<textarea placeholder="第一行：图片地址，如 /uploads/a.png 或 https://…&#10;第二行起：图注（可留空）">${esc(b.content)}</textarea>${fmtBarHtml(b)}
                        <div class="imgup">
                            <button data-act="pickimg" title="选一张图片上传到 /uploads">${ICO_UP}上传图片</button>
-                           <span class="upl">也可直接粘贴图片地址；图注写在第二行</span>
+                           <span class="upl">也可直接粘贴图片地址，或把图片文件拖进本模块；图注写在第二行</span>
                            <input type="file" class="imgfile" accept="image/*" hidden>
                        </div>`
                     : `<textarea placeholder="${b.type === 'ul' || b.type === 'ol' ? '每行一项…' : '写点什么…'}">${esc(b.content)}</textarea>${fmtBarHtml(b)}`}
@@ -1224,10 +1361,26 @@ function toggleSel(id){
     else {
         if (sel.length && findParent(id) !== findParent(sel[0])){ toast('只能合并同一层级的模块'); return; }
         sel.push(id);
+        selAnchor = id;                         // 记录最后一个选中项，作 Shift 范围选择的锚点
+    }
+    if (!sel.includes(selAnchor)) selAnchor = sel[sel.length - 1] || null;
+    renderAll();
+}
+/* Shift+点击：从锚点到当前点击项之间（同一层级）整段选中；若还没锚点则以此项为锚点 */
+function selectRangeTo(id){
+    const p = findParent(id);
+    if (!p || !state.blocks[id]) return;
+    if (!selAnchor || findParent(selAnchor) !== p || !sel.includes(selAnchor)){
+        selAnchor = id; sel = [id];
+    } else {
+        const list = listOf(p);
+        const a = list.indexOf(selAnchor), b = list.indexOf(id);
+        if (a < 0 || b < 0){ selAnchor = id; sel = [id]; }
+        else sel = list.slice(Math.min(a, b), Math.max(a, b) + 1);   // 含两端
     }
     renderAll();
 }
-function clearSel(){ sel = []; renderAll(); }
+function clearSel(){ sel = []; selAnchor = null; renderAll(); }
 
 function mergeSelection(){
     if (!sel.length) return;
@@ -1400,6 +1553,7 @@ function onUp(e){
 
     if (!drag.started){                       // 位移不足 → 视为点击
         const id = drag.id;
+        if (e.shiftKey){ selectRangeTo(id); drag = null; return; }        // Shift+点击：从锚点到此处整段选择
         if (e.ctrlKey || e.metaKey){ toggleSel(id); drag = null; return; }   // Ctrl+点击：多选
         state.open[id] = !state.open[id];
         drag.el.classList.toggle('open', !!state.open[id]);
@@ -1456,7 +1610,7 @@ document.addEventListener('click', e => {
     const blk = btn.closest('.blk'); if (!blk) return;
     const id = blk.dataset.id, act = btn.dataset.act;
     if (act === 'toggle'){ state.open[id] = !state.open[id]; blk.classList.toggle('open', !!state.open[id]); save(); }
-    else if (act === 'pick'){ toggleSel(id); }
+    else if (act === 'pick'){ if (e.shiftKey) selectRangeTo(id); else toggleSel(id); }
     else if (act === 'type'){ openTypeModal(id); }
     else if (act === 'split'){ splitBlock(id); }
     else if (act === 'align'){ applyAlign(id, btn.dataset.v); }
@@ -1472,31 +1626,73 @@ document.addEventListener('click', e => {
     }
 });
 
-/* 图片上传：打到本站 api.ashx，存进 /uploads/，回填地址到第一行 */
-document.addEventListener('change', e => {
-    const fi = e.target.closest('.blk > .body > .imgfile');
-    if (!fi) return;
-    const f = fi.files && fi.files[0];
-    fi.value = '';
-    if (!f) return;
-    const id = fi.closest('.blk').dataset.id;
-    const b = state.blocks[id];
-    if (!b) return;
-    toast('正在上传…');
+/* 把一张图片传到后端（api.ashx）或退化为本地 data URL，并写入图片模块第一行（保留已写图注） */
+function uploadImageToBlock(b, f){
+    if (!b || !f) return;
+    toast('正在处理图片…');
     const fd = new FormData();
     fd.append('file', f);
     fetch('api.ashx?action=uploadfile', { method:'POST', body:fd })
         .then(r => r.json())
         .then(j => {
-            if (!j || !j.success){ toast('上传失败：' + ((j && j.message) || '未知错误')); return; }
-            const url = j.url || ('/uploads/' + (j.filename || ''));
-            const rest = lines(b.content).slice(1);          // 保留已写好的图注
-            b.content = [url].concat(rest).join('\n');
-            renderAll(); pushHistory(); save();
-            toast('已上传：' + url);
+            if (!j || !j.success) throw new Error((j && j.message) || '未知错误');
+            fillImageUrl(b, j.url || ('/uploads/' + (j.filename || '')));
         })
-        .catch(() => toast('上传失败：请用 http://localhost 打开本页，别用本地文件方式打开'));
+        .catch(() => {
+            // 没有上传后端（如 GitHub Pages / 本地双击打开）时，退化为内嵌 data URL，保证能预览
+            try{
+                const rd = new FileReader();
+                rd.onload = () => { fillImageUrl(b, rd.result); toast('已用本地 data URL 嵌入（部署到有上传接口的环境后图片地址会更短）'); };
+                rd.onerror = () => toast('图片读取失败');
+                rd.readAsDataURL(f);
+            }catch(err){ toast('图片处理失败：请用 http://localhost 打开本页再上传'); }
+        });
+}
+/* 把图片地址写进模块第一行，图注（其余行）原样保留 */
+function fillImageUrl(b, url){
+    if (!b || !url) return;
+    const rest = lines(b.content).slice(1);
+    b.content = [url].concat(rest).join('\n');
+    renderAll(); pushHistory(); save();
+    toast('图片已填入地址');
+}
+
+/* 点「上传图片」选文件后触发（注意 .imgfile 在 .imgup 里，必须用后代选择器） */
+document.addEventListener('change', e => {
+    const fi = e.target.closest('.blk .imgfile');
+    if (!fi) return;
+    const f = fi.files && fi.files[0];
+    fi.value = '';
+    if (!f) return;
+    const b = state.blocks[fi.closest('.blk').dataset.id];
+    if (!b) return;
+    uploadImageToBlock(b, f);
 });
+
+/* 直接把图片拖进「图片」模块 → 上传并写入地址；拖到别处仍按「工程文件」处理 */
+const IMG_EXT = /\.(png|jpe?g|gif|webp|bmp)$/i;
+const imgBlockAt = t => (t && t.closest) ? t.closest('.blk.t-img') : null;
+document.addEventListener('dragover', e => {
+    if (!e.dataTransfer || ![...(e.dataTransfer.types || [])].includes('Files')) return;
+    const blk = imgBlockAt(e.target);
+    if (blk){ e.preventDefault(); blk.classList.add('dragover'); }
+}, true);
+document.addEventListener('dragleave', e => {
+    const blk = imgBlockAt(e.target);
+    if (blk && !(e.relatedTarget && blk.contains(e.relatedTarget))) blk.classList.remove('dragover');
+}, true);
+document.addEventListener('drop', e => {
+    if (!e.dataTransfer || ![...(e.dataTransfer.types || [])].includes('Files')) return;
+    const blk = imgBlockAt(e.target);
+    if (!blk) return;                               // 非图片模块：交给窗口级「拖入工程文件」逻辑
+    const b = state.blocks[blk.dataset.id];
+    if (!b) return;
+    const f = [...(e.dataTransfer.files || [])].find(f => IMG_EXT.test(f.name) || (f.type || '').startsWith('image/'));
+    if (!f){ toast('请拖入图片文件（png / jpg / gif / webp）'); return; }
+    e.preventDefault(); e.stopPropagation();        // 已处理，别再触发窗口的工程文件提示
+    blk.classList.remove('dragover');
+    uploadImageToBlock(b, f);
+}, true);
 
 document.addEventListener('input', e => {
     const ta = e.target.closest('.blk > .body > textarea');
@@ -1805,12 +2001,20 @@ $('#fileInput').addEventListener('change', e => {
     const f = e.target.files && e.target.files[0];
     if (f) readProjectFile(f);
 });
+$('#btnImportMd').onclick = () => { $('#mdInput').value = ''; $('#mdInput').click(); };
+$('#mdInput').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if (f) importMarkdownFile(f);
+});
 ['dragover','drop'].forEach(type => window.addEventListener(type, e => {
     if (!e.dataTransfer || ![...(e.dataTransfer.types || [])].includes('Files')) return;
     e.preventDefault();
     if (type !== 'drop') return;
     const f = [...(e.dataTransfer.files || [])].find(f => /\.(json|ptai)$/i.test(f.name));
-    if (f) readProjectFile(f); else toast('请拖入 .json 工程文件');
+    if (f){ readProjectFile(f); return; }
+    const m = [...(e.dataTransfer.files || [])].find(f => /\.(md|markdown|txt)$/i.test(f.name));
+    if (m){ importMarkdownFile(m); return; }
+    toast('请拖入 .json 工程文件 或 .md / .txt Markdown 文件');
 }));
 
 /* ---------- 启动 ---------- */
